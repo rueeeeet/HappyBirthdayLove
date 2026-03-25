@@ -10,6 +10,8 @@ const state = {
   touchStartY: 0,
   openedReasons: new Set(),
   transitionTimer: null,
+  scrollNotificationTimer: null,
+  scrollNotificationRemoveTimer: null,
   musicStarted: false,
 };
 
@@ -19,6 +21,9 @@ const reasonCount = document.getElementById("reason-count");
 const enterSiteButton = document.getElementById("enter-site");
 const heroParticles = document.getElementById("hero-particles");
 const bgMusic = document.getElementById("bg-music");
+const loveMessageInput = document.getElementById("love-message");
+const sendWhatsappButton = document.getElementById("send-whatsapp");
+const WHATSAPP_NUMBER = "918860925427";
 
 const viewer = document.getElementById("viewer");
 const viewerStage = document.getElementById("viewer-stage");
@@ -123,12 +128,31 @@ function closeViewer() {
   }
 
   viewer.classList.remove("is-transitioning");
+  clearScrollToFinalNotification();
 
   viewer.close();
   document.body.style.overflow = "";
 
   if (state.originButton) {
     state.originButton.focus();
+  }
+}
+
+function clearScrollToFinalNotification() {
+  if (state.scrollNotificationTimer) {
+    clearTimeout(state.scrollNotificationTimer);
+    state.scrollNotificationTimer = null;
+  }
+
+  if (state.scrollNotificationRemoveTimer) {
+    clearTimeout(state.scrollNotificationRemoveTimer);
+    state.scrollNotificationRemoveTimer = null;
+  }
+
+  const existingNotification = document.querySelector(".scroll-to-final-notification");
+
+  if (existingNotification) {
+    existingNotification.remove();
   }
 }
 
@@ -139,12 +163,13 @@ function handleBackdropClick(event) {
 }
 
 function normalize(index) {
+  // Clamp between 1 and NORMAL_REASON_TOTAL (no wrapping)
   if (index < 1) {
-    return NORMAL_REASON_TOTAL;
+    return 1;
   }
 
   if (index > NORMAL_REASON_TOTAL) {
-    return 1;
+    return NORMAL_REASON_TOTAL;
   }
 
   return index;
@@ -193,9 +218,42 @@ function setViewerContent(index) {
 }
 
 function shiftViewer(step) {
-  state.currentIndex = normalize(state.currentIndex + step);
+  const nextIndex = state.currentIndex + step;
+  
+  // Check if trying to go forward (left swipe) from 100th reason
+  if (state.currentIndex === NORMAL_REASON_TOTAL && step === 1) {
+    showScrollToFinalNotification();
+    return;
+  }
+  
+  // Check if trying to go backward (right swipe) from 1st
+  if (state.currentIndex === 1 && step === -1) {
+    return;
+  }
+  
+  state.currentIndex = normalize(nextIndex);
   state.lastOpenedIndex = state.currentIndex;
   setViewerContent(state.currentIndex);
+}
+
+function showScrollToFinalNotification() {
+  clearScrollToFinalNotification();
+
+  const notification = document.createElement("div");
+  notification.className = "scroll-to-final-notification";
+  notification.textContent = "👉 Scroll down to see the 101th ✨";
+
+  const host = viewer && viewer.open ? viewer : document.body;
+  host.appendChild(notification);
+
+  state.scrollNotificationTimer = window.setTimeout(() => {
+    notification.style.animation = "slideDown 0.3s ease-out";
+    state.scrollNotificationRemoveTimer = window.setTimeout(() => {
+      notification.remove();
+      state.scrollNotificationRemoveTimer = null;
+    }, 300);
+    state.scrollNotificationTimer = null;
+  }, 2500);
 }
 
 function handleViewerKeyboard(event) {
@@ -250,6 +308,22 @@ function unlockSite() {
   if (firstAction) {
     firstAction.focus({ preventScroll: true });
   }
+
+  // Request fullscreen
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch((err) => {
+      console.log(`Fullscreen request failed: ${err.message}`);
+    });
+  } else if (document.documentElement.webkitRequestFullscreen) {
+    // Safari support
+    document.documentElement.webkitRequestFullscreen();
+  } else if (document.documentElement.mozRequestFullScreen) {
+    // Firefox support
+    document.documentElement.mozRequestFullScreen();
+  } else if (document.documentElement.msRequestFullscreen) {
+    // IE11 support
+    document.documentElement.msRequestFullscreen();
+  }
 }
 
 function playBackgroundMusic() {
@@ -270,6 +344,30 @@ function playBackgroundMusic() {
       });
   } else {
     state.musicStarted = true;
+  }
+}
+
+function sendMessageToWhatsapp() {
+  if (!loveMessageInput) {
+    return;
+  }
+
+  const message = loveMessageInput.value;
+
+  if (!message || !message.trim()) {
+    window.alert("Please write a message first.");
+    loveMessageInput.focus();
+    return;
+  }
+
+  const text = `A message for you🥺:\nSent by your bhonduuu🥺🥺😭\n\n${message}`;
+  const params = new URLSearchParams({ text });
+  const url = `https://wa.me/${WHATSAPP_NUMBER}?${params.toString()}`;
+  const openedWindow = window.open(url, "_blank", "noopener,noreferrer");
+
+  // Fallback for environments that block popups; keep flow reliable on mobile.
+  if (!openedWindow) {
+    window.location.href = url;
   }
 }
 
@@ -304,6 +402,10 @@ function init() {
 
   if (enterSiteButton) {
     enterSiteButton.addEventListener("click", unlockSite);
+  }
+
+  if (sendWhatsappButton) {
+    sendWhatsappButton.addEventListener("click", sendMessageToWhatsapp);
   }
 
   viewer.addEventListener("close", closeViewer);
