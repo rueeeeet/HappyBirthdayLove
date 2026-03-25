@@ -1,4 +1,5 @@
 const TOTAL_REASONS = 101;
+const NORMAL_REASON_TOTAL = 100;
 const HEART_SYMBOLS = ["❤", "♥", "♡"];
 
 const state = {
@@ -7,32 +8,42 @@ const state = {
   originButton: null,
   touchStartX: 0,
   touchStartY: 0,
+  openedReasons: new Set(),
+  transitionTimer: null,
+  musicStarted: false,
 };
 
 const gallery = document.getElementById("gallery");
+const finalReasonGallery = document.getElementById("final-reason-gallery");
 const reasonCount = document.getElementById("reason-count");
-const randomButton = document.getElementById("open-random");
-const jumpLatestButton = document.getElementById("jump-latest");
-const topButton = document.getElementById("scroll-top");
-const floatingTopButton = document.getElementById("floating-top");
 const enterSiteButton = document.getElementById("enter-site");
 const heroParticles = document.getElementById("hero-particles");
+const bgMusic = document.getElementById("bg-music");
 
 const viewer = document.getElementById("viewer");
 const viewerStage = document.getElementById("viewer-stage");
 const viewerImage = document.getElementById("viewer-image");
 const viewerCaption = document.getElementById("viewer-caption");
-const nextReason = document.getElementById("next-reason");
-const prevReason = document.getElementById("prev-reason");
 const nextBottom = document.getElementById("next-bottom");
 const prevBottom = document.getElementById("prev-bottom");
 const template = document.getElementById("reason-card-template");
 
 const makeSrc = (index) => `images/${index}.png`;
 
-function buildCard(index) {
+function revealReason(index) {
+  state.openedReasons.add(index);
+  const card = document.querySelector(`.reason-card[data-index="${index}"]`);
+
+  if (card) {
+    card.classList.add("opened");
+  }
+}
+
+function buildCard(index, options = {}) {
+  const { isFinal = false } = options;
   const fragment = template.content.cloneNode(true);
   const card = fragment.querySelector(".reason-card");
+  const item = fragment.querySelector(".reason-item");
   const badge = fragment.querySelector(".badge");
   const img = fragment.querySelector(".reason-image");
   const fallback = fragment.querySelector(".fallback");
@@ -41,6 +52,11 @@ function buildCard(index) {
   badge.textContent = label;
   card.dataset.index = String(index);
   card.setAttribute("aria-label", `Open ${label}`);
+
+  if (isFinal) {
+    card.classList.add("final-reason-card");
+    item.classList.add("final-reason-item");
+  }
 
   img.src = makeSrc(index);
   img.alt = `${label} image`;
@@ -58,6 +74,7 @@ function buildCard(index) {
   });
 
   card.addEventListener("click", () => {
+    revealReason(index);
     state.originButton = card;
     openViewer(index);
   });
@@ -68,16 +85,24 @@ function buildCard(index) {
 function renderGallery() {
   const list = document.createDocumentFragment();
 
-  for (let index = 1; index <= TOTAL_REASONS; index += 1) {
+  for (let index = 1; index <= NORMAL_REASON_TOTAL; index += 1) {
     list.appendChild(buildCard(index));
   }
 
   gallery.appendChild(list);
-  reasonCount.textContent = `${TOTAL_REASONS} reasons`;
+  reasonCount.textContent = `${NORMAL_REASON_TOTAL} reasons + 1 final reason`;
+}
+
+function renderFinalReason() {
+  if (!finalReasonGallery) {
+    return;
+  }
+
+  finalReasonGallery.appendChild(buildCard(TOTAL_REASONS, { isFinal: true }));
 }
 
 function openViewer(index) {
-  state.currentIndex = normalize(index);
+  state.currentIndex = normalizeForOpen(index);
   state.lastOpenedIndex = state.currentIndex;
   setViewerContent(state.currentIndex);
 
@@ -92,6 +117,13 @@ function closeViewer() {
     return;
   }
 
+  if (state.transitionTimer) {
+    clearTimeout(state.transitionTimer);
+    state.transitionTimer = null;
+  }
+
+  viewer.classList.remove("is-transitioning");
+
   viewer.close();
   document.body.style.overflow = "";
 
@@ -100,49 +132,70 @@ function closeViewer() {
   }
 }
 
+function handleBackdropClick(event) {
+  if (event.target === viewer) {
+    closeViewer();
+  }
+}
+
 function normalize(index) {
   if (index < 1) {
-    return TOTAL_REASONS;
+    return NORMAL_REASON_TOTAL;
   }
 
-  if (index > TOTAL_REASONS) {
+  if (index > NORMAL_REASON_TOTAL) {
     return 1;
   }
 
   return index;
 }
 
+function normalizeForOpen(index) {
+  if (index === TOTAL_REASONS) {
+    return TOTAL_REASONS;
+  }
+
+  return normalize(index);
+}
+
 function setViewerContent(index) {
-  const current = normalize(index);
+  const current = normalizeForOpen(index);
   const src = makeSrc(current);
 
-  viewerImage.src = src;
-  viewerImage.alt = `Reason ${current} image`;
-  viewerCaption.textContent = `Reason ${current} of ${TOTAL_REASONS}`;
+  const applyContent = () => {
+    revealReason(current);
+    viewerImage.src = src;
+    viewerImage.alt = `Reason ${current} image`;
+    viewerCaption.textContent =
+      current === TOTAL_REASONS
+        ? `Reason ${current} \u2022 The final 101th`
+        : `Reason ${current} of ${TOTAL_REASONS}`;
+  };
+
+  const shouldAnimate = viewer.open && Boolean(viewerImage.getAttribute("src"));
+
+  if (!shouldAnimate) {
+    applyContent();
+    return;
+  }
+
+  if (state.transitionTimer) {
+    clearTimeout(state.transitionTimer);
+  }
+
+  viewer.classList.add("is-transitioning");
+
+  state.transitionTimer = window.setTimeout(() => {
+    applyContent();
+    viewer.classList.remove("is-transitioning");
+    state.transitionTimer = null;
+  }, 140);
 }
 
 function shiftViewer(step) {
   state.currentIndex = normalize(state.currentIndex + step);
   state.lastOpenedIndex = state.currentIndex;
   setViewerContent(state.currentIndex);
-}
-
-function jumpToLatest() {
-  const target = Number(state.lastOpenedIndex || 1);
-  const button = gallery.querySelector(`[data-index="${target}"]`);
-
-  if (button) {
-    button.scrollIntoView({ behavior: "smooth", block: "center" });
-    button.focus({ preventScroll: true });
-  }
-}
-
-function randomReason() {
-  const randomIndex = Math.floor(Math.random() * TOTAL_REASONS) + 1;
-  const button = gallery.querySelector(`[data-index="${randomIndex}"]`);
-
-  state.originButton = button;
-  openViewer(randomIndex);
 }
 
 function handleViewerKeyboard(event) {
@@ -189,21 +242,34 @@ function bindSwipe() {
   );
 }
 
-function updateTopButton() {
-  const visible = window.scrollY > 420;
-  floatingTopButton.style.display = visible ? "grid" : "none";
-}
-
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
 function unlockSite() {
   document.body.classList.remove("intro-active");
-  const firstAction = document.getElementById("open-random");
+  playBackgroundMusic();
+  const firstAction = document.querySelector(".reason-card");
 
   if (firstAction) {
     firstAction.focus({ preventScroll: true });
+  }
+}
+
+function playBackgroundMusic() {
+  if (!bgMusic || state.musicStarted) {
+    return;
+  }
+
+  bgMusic.volume = 0.6;
+  const playPromise = bgMusic.play();
+
+  if (playPromise && typeof playPromise.then === "function") {
+    playPromise
+      .then(() => {
+        state.musicStarted = true;
+      })
+      .catch(() => {
+        // Ignore playback failures and keep UI flow uninterrupted.
+      });
+  } else {
+    state.musicStarted = true;
   }
 }
 
@@ -231,31 +297,24 @@ function renderHeroParticles() {
 function init() {
   renderHeroParticles();
   renderGallery();
+  renderFinalReason();
 
-  nextReason.addEventListener("click", () => shiftViewer(1));
-  prevReason.addEventListener("click", () => shiftViewer(-1));
   nextBottom.addEventListener("click", () => shiftViewer(1));
   prevBottom.addEventListener("click", () => shiftViewer(-1));
-
-  randomButton.addEventListener("click", randomReason);
-  jumpLatestButton.addEventListener("click", jumpToLatest);
-  topButton.addEventListener("click", scrollToTop);
-  floatingTopButton.addEventListener("click", scrollToTop);
 
   if (enterSiteButton) {
     enterSiteButton.addEventListener("click", unlockSite);
   }
 
   viewer.addEventListener("close", closeViewer);
+  viewer.addEventListener("click", handleBackdropClick);
   viewerImage.addEventListener("error", () => {
     viewerCaption.textContent = `Reason ${state.currentIndex} is unavailable`;
   });
 
   window.addEventListener("keydown", handleViewerKeyboard);
-  window.addEventListener("scroll", updateTopButton, { passive: true });
 
   bindSwipe();
-  updateTopButton();
 }
 
 init();
