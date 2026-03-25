@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="101 reasons I love you - a birthday gallery made with love."
+    />
+    <title>101 Reasons I Love Her</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Petit+Formal+Script&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="intro-active">
+    <section id="intro-screen" class="intro-screen" aria-label="Birthday welcome screen">
+      <div class="intro-card">
+        <p class="intro-eyebrow">For You, My Love</p>
+        <h2 class="intro-title">Happy Birthday</h2>
+        <p class="intro-text">
+          I made this little world of love for you. Tap below and open all 101 reasons.
+        </p>
+        <button id="enter-site" class="action-btn intro-enter" type="button">Open My Heart</button>
+      </div>
+    </section>
+
+    <div class="backdrop" aria-hidden="true"></div>
+
+    <header class="hero">
+      <div id="hero-particles" class="hero-particles" aria-hidden="true"></div>
+      <!-- <p class="eyebrow">A Birthday Gift</p> -->
+      <div class="title-frame">
+        <h1>Happy Birthday Love</h1>
+      </div>
+      <p class="intro">
+        Since you always ask me why i love you So much So today I'll tell You why i love You this much	
+      </p>
+      <div class="hero-actions">
+        <button id="open-random" class="action-btn" type="button">Surprise Me</button>
+        <button id="jump-latest" class="action-btn ghost" type="button">Last Opened</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="gallery-wrap" aria-label="Reasons gallery">
+        <div class="gallery-top">
+          <p class="count" id="reason-count" aria-live="polite">101 reasons</p>
+          <button id="scroll-top" class="mini-btn" type="button">Top</button>
+        </div>
+        <ul id="gallery" class="gallery" aria-label="101 reasons"></ul>
+      </section>
+    </main>
+
+    <button id="floating-top" class="floating-top" type="button" aria-label="Back to top">
+      ↑
+    </button>
+
+    <dialog id="viewer" class="viewer" aria-label="Reason image viewer">
+      <form method="dialog" class="viewer-close-wrap">
+        <button id="close-viewer" class="viewer-close" type="submit" aria-label="Close viewer">
+          Close
+        </button>
+      </form>
+
+      <div class="viewer-stage" id="viewer-stage">
+        <button id="prev-reason" class="viewer-nav prev" type="button" aria-label="Previous reason">
+          ‹
+        </button>
+
+        <figure class="viewer-figure">
+          <img id="viewer-image" src="" alt="" loading="eager" decoding="sync" />
+          <figcaption id="viewer-caption">Reason 1 of 101</figcaption>
+        </figure>
+
+        <button id="next-reason" class="viewer-nav next" type="button" aria-label="Next reason">
+          ›
+        </button>
+      </div>
+
+      <div class="viewer-footer">
+        <button id="prev-bottom" class="action-btn ghost" type="button">Previous</button>
+        <button id="next-bottom" class="action-btn" type="button">Next</button>
+      </div>
+    </dialog>
+
+    <template id="reason-card-template">
+      <li class="reason-item">
+        <button class="reason-card" type="button">
+          <span class="badge"></span>
+          <img class="reason-image" src="" alt="" loading="lazy" decoding="async" />
+          <span class="fallback" hidden>Image unavailable</span>
+        </button>
+      </li>
+    </template>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
