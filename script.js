@@ -12,6 +12,7 @@ const state = {
   transitionTimer: null,
   scrollNotificationTimer: null,
   scrollNotificationRemoveTimer: null,
+  scrollLockY: 0,
   musicStarted: false,
 };
 
@@ -113,7 +114,7 @@ function openViewer(index) {
 
   if (!viewer.open) {
     viewer.showModal();
-    document.body.style.overflow = "hidden";
+    lockPageScroll();
   }
 }
 
@@ -131,11 +132,33 @@ function closeViewer() {
   clearScrollToFinalNotification();
 
   viewer.close();
-  document.body.style.overflow = "";
+  unlockPageScroll();
 
   if (state.originButton) {
     state.originButton.focus();
   }
+}
+
+function lockPageScroll() {
+  if (document.body.classList.contains("modal-open")) {
+    return;
+  }
+
+  state.scrollLockY = window.scrollY || window.pageYOffset || 0;
+  document.documentElement.classList.add("modal-open");
+  document.body.classList.add("modal-open");
+  document.body.style.top = `-${state.scrollLockY}px`;
+}
+
+function unlockPageScroll() {
+  if (!document.body.classList.contains("modal-open")) {
+    return;
+  }
+
+  document.documentElement.classList.remove("modal-open");
+  document.body.classList.remove("modal-open");
+  document.body.style.top = "";
+  window.scrollTo(0, state.scrollLockY);
 }
 
 function clearScrollToFinalNotification() {
@@ -302,6 +325,7 @@ function bindSwipe() {
 
 function unlockSite() {
   document.body.classList.remove("intro-active");
+  document.documentElement.classList.remove("intro-active");
   playBackgroundMusic();
   const firstAction = document.querySelector(".reason-card");
 

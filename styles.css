@@ -25,9 +25,21 @@ body {
   padding: 0;
 }
 
+html.intro-active,
+body.intro-active {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -39,8 +51,17 @@ body {
   padding: 1rem 0.85rem calc(7rem + var(--safe-bottom));
 }
 
+body.modal-open {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
 body.intro-active {
-  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  width: 100%;
 }
 
 .intro-screen {
