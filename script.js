@@ -29,6 +29,7 @@ const viewer = document.getElementById("viewer");
 const viewerStage = document.getElementById("viewer-stage");
 const viewerImage = document.getElementById("viewer-image");
 const viewerCaption = document.getElementById("viewer-caption");
+const swipeHint = document.querySelector(".swipe-hint");
 const nextBottom = document.getElementById("next-bottom");
 const prevBottom = document.getElementById("prev-bottom");
 const template = document.getElementById("reason-card-template");
@@ -205,6 +206,7 @@ function setViewerContent(index) {
       current === TOTAL_REASONS
         ? `Way ${current} \u2022 The final truth`
         : `Way ${current} of ${TOTAL_REASONS}`;
+    updateViewerNavigationUI(current);
   };
 
   const shouldAnimate = viewer.open && Boolean(viewerImage.getAttribute("src"));
@@ -228,6 +230,10 @@ function setViewerContent(index) {
 }
 
 function shiftViewer(step) {
+  if (state.currentIndex === TOTAL_REASONS) {
+    return;
+  }
+
   const nextIndex = state.currentIndex + step;
   
   // Check if trying to go forward (left swipe) from 100th reason
@@ -244,6 +250,24 @@ function shiftViewer(step) {
   state.currentIndex = normalize(nextIndex);
   state.lastOpenedIndex = state.currentIndex;
   setViewerContent(state.currentIndex);
+}
+
+function updateViewerNavigationUI(index) {
+  const isFinalReason = index === TOTAL_REASONS;
+
+  if (nextBottom) {
+    nextBottom.hidden = isFinalReason;
+    nextBottom.disabled = isFinalReason;
+  }
+
+  if (prevBottom) {
+    prevBottom.hidden = isFinalReason;
+    prevBottom.disabled = isFinalReason;
+  }
+
+  if (swipeHint) {
+    swipeHint.hidden = isFinalReason;
+  }
 }
 
 function showScrollToFinalNotification() {
