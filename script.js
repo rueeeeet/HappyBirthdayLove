@@ -63,7 +63,7 @@ function buildCard(index, options = {}) {
   const img = fragment.querySelector(".reason-image");
   const fallback = fragment.querySelector(".fallback");
 
-  const label = `Reason ${index}`;
+  const label = `Love Note #${index}`;
   badge.textContent = label;
   card.dataset.index = String(index);
   card.setAttribute("aria-label", `Open ${label}`);
@@ -105,7 +105,7 @@ function renderGallery() {
   }
 
   gallery.appendChild(list);
-  reasonCount.textContent = `${NORMAL_REASON_TOTAL} reasons + 1 final reason`;
+  reasonCount.textContent = `${NORMAL_REASON_TOTAL} ways I love you + 1 final truth`;
 }
 
 function renderFinalReason() {
@@ -200,11 +200,11 @@ function setViewerContent(index) {
   const applyContent = () => {
     revealReason(current);
     viewerImage.src = src;
-    viewerImage.alt = `Reason ${current} image`;
+    viewerImage.alt = `Way ${current} image`;
     viewerCaption.textContent =
       current === TOTAL_REASONS
-        ? `Reason ${current} \u2022 The final 101th`
-        : `Reason ${current} of ${TOTAL_REASONS}`;
+        ? `Way ${current} \u2022 The final truth`
+        : `Way ${current} of ${TOTAL_REASONS}`;
   };
 
   const shouldAnimate = viewer.open && Boolean(viewerImage.getAttribute("src"));
@@ -251,7 +251,7 @@ function showScrollToFinalNotification() {
 
   const notification = document.createElement("div");
   notification.className = "scroll-to-final-notification";
-  notification.textContent = "👉 Scroll down to see the 101th ✨";
+  notification.textContent = "👉 Scroll down to see the final truth ✨";
 
   const host = viewer && viewer.open ? viewer : document.body;
   host.appendChild(notification);
@@ -444,7 +444,7 @@ function init() {
   viewer.addEventListener("close", closeViewer);
   viewer.addEventListener("click", handleBackdropClick);
   viewerImage.addEventListener("error", () => {
-    viewerCaption.textContent = `Reason ${state.currentIndex} is unavailable`;
+    viewerCaption.textContent = `Way ${state.currentIndex} is unavailable`;
   });
 
   window.addEventListener("wheel", preventIntroScroll, { passive: false });
